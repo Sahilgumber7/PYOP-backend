@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import eventRoutes from './routes/event.routes'; // ✅ update path if needed
+import userRoutes from './routes/user.routes';
+
+
 
 
 const app = express();
@@ -15,7 +18,6 @@ app.get('/', (_req, res) => {
 });
 
 app.use('/api/events', eventRoutes);
-// Add your routes here
-// app.use('/api/events', eventRoutes);
+app.use('/api/users', userRoutes);
 
 export default app;
