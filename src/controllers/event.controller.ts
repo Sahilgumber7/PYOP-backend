@@ -5,15 +5,6 @@ import User from '../models/User';
 import { populateEvent } from '../utils/populateEvent';
 
 /* ──────────────────────────────────────*/
-/* Helper: delete events whose endDateTime
-   is 4 days in the past                               */
-export const deleteExpiredEvents = async () => {
-  const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
-  const res = await Event.deleteMany({ endDateTime: { $lt: fourDaysAgo } });
-  return res.deletedCount;
-};
-
-/* ──────────────────────────────────────*/
 /*  POST /api/events
     Expected body:
     {
@@ -62,7 +53,6 @@ export const getEventById = async (req: Request, res: Response) => {
 export const getAllEvents = async (req: Request, res: Response) => {
   const { query, limit = 6, page = 1, category } = req.query;
 
-  await deleteExpiredEvents(); // optional house‑keeping
 
   const titleCond = query ? { title: { $regex: query, $options: 'i' } } : {};
   const categoryDoc = category
