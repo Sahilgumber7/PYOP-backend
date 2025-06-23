@@ -4,20 +4,26 @@ import {
   getAllEvents,
   getEventById,
   updateEvent,
-  deleteEvent,
   getEventsByUser,
   getRelatedEventsByCategory,
 } from '../controllers/event.controller';
-import { asyncHandler } from '../utils/asyncHandler';
 
 const router = express.Router();
 
-router.post('/', asyncHandler(createEvent));
-router.get('/', asyncHandler(getAllEvents));
-router.get('/:id', asyncHandler(getEventById));
-router.put('/:id', asyncHandler(updateEvent));
-router.delete('/:id', asyncHandler(deleteEvent));
-router.get('/user/:userId', asyncHandler(getEventsByUser));
-router.get('/related/:categoryId/:eventId', asyncHandler(getRelatedEventsByCategory));
+// Create a new event
+router.post('/', createEvent);
+
+// Get all events (with optional filters)
+router.get('/', getAllEvents);
+
+// Get a single event by ID
+router.get('/:id', getEventById);
+
+
+// Get events by user (organizer)
+router.get('/user/:userId', getEventsByUser);
+
+// Get related events by category (excluding one event)
+router.get('/related/:categoryId/:eventId', getRelatedEventsByCategory);
 
 export default router;
