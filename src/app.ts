@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import eventRoutes from './routes/event.routes'; // ✅ update path if needed
+import eventRoutes from './routes/event.routes'; 
 import userRoutes from './routes/user.routes';
+import categoryRoutes from './routes/category.routes'; 
 
 
 
@@ -19,5 +20,6 @@ app.get('/', (_req, res) => {
 
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 export default app;
