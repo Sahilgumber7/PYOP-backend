@@ -1,65 +1,53 @@
+
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import Order from '../models/Order';
 import User from '../models/User';
 import Event from '../models/Event';
 import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
 
-// @desc Create a new order (Free or Paid)
+// @desc Create a new order (Free or Paid, simple method)
 // @route POST /api/orders
 // @access Public
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const {
     clerkId,
     razorpayId,
-    razorpayOrderId,
-    razorpaySignature,
     totalAmount,
     eventId,
     ticketCategory,
   } = req.body;
 
+  // 🔍 Validate user
   const user = await User.findOne({ clerkId });
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
+  // 🔍 Validate event
   const event = await Event.findById(eventId);
   if (!event) {
     res.status(404);
     throw new Error('Event not found');
   }
 
+  // 🎟️ Find selected ticket category
   const selectedTicket = event.ticketCategories.find(
-    (t: any) => t._id.toString() === ticketCategory._id
+    (t: any) => t.name === ticketCategory.name
   );
+
   if (!selectedTicket) {
     res.status(404);
     throw new Error('Ticket category not found');
   }
 
-  let finalRazorpayId = razorpayId;
+  // 🆓 If free ticket, generate dummy Razorpay ID
+  const finalRazorpayId = Number(selectedTicket.price) === 0
+    ? uuidv4()
+    : razorpayId;
 
-  if (Number(selectedTicket.price) > 0) {
-    // 🔐 Paid ticket verification
-    const secret = process.env.RAZORPAY_KEY_SECRET!;
-    const generatedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(`${razorpayOrderId}|${razorpayId}`)
-      .digest('hex');
-
-    if (generatedSignature !== razorpaySignature) {
-      res.status(400);
-      throw new Error('Invalid Razorpay signature');
-    }
-  } else {
-    // 🆓 Free ticket — generate fake payment ID
-    finalRazorpayId = uuidv4();
-  }
-
-  // ✅ Create order
+  // 📦 Create the order
   const newOrder = await Order.create({
     razorpayId: finalRazorpayId,
     totalAmount,
@@ -72,13 +60,13 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     createdAt: new Date(),
   });
 
-  // 🧮 Decrement ticket count (if limited)
-  const remainingTickets = parseInt(selectedTicket.remainingTickets, 10);
-  if (remainingTickets > 0) {
-    selectedTicket.remainingTickets = (remainingTickets - 1).toString();
+  // 🔽 Decrement remaining tickets (if limited)
+  if (selectedTicket.remainingTickets && Number(selectedTicket.remainingTickets) > 0) {
+    selectedTicket.remainingTickets = (Number(selectedTicket.remainingTickets) - 1).toString();
     await event.save();
   }
 
+  // ✅ Return the new order
   res.status(201).json(newOrder);
 });
 
