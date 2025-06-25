@@ -85,16 +85,20 @@ export const getOrdersByUser = asyncHandler(async (req: Request, res: Response) 
   }
 
   const orders = await Order.find({ buyer: user._id })
-    .populate('event', 'title')
-    .populate('buyer', 'firstName lastName');
+    .populate({
+      path: 'event',
+      select: 'title imageUrl location startDateTime endDateTime',
+    })
+    .populate({
+      path: 'buyer',
+      select: 'firstName lastName',
+    });
 
   res.json(orders);
 });
 
 
-// @desc    Get a specific order by ID for a user (validate ownership)
-// @route   GET /api/orders/:orderId/user/:clerkId
-// @access  Public
+
 export const getOrderById = asyncHandler(async (req: Request, res: Response) => {
   const { orderId, clerkId } = req.params;
 
@@ -105,15 +109,21 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const order = await Order.findById(orderId)
-    .populate('event', 'title')
-    .populate('buyer', 'firstName lastName');
+    .populate({
+      path: 'event',
+      select: 'title imageUrl location startDateTime endDateTime',
+    })
+    .populate({
+      path: 'buyer',
+      select: 'firstName lastName',
+    });
 
   if (!order) {
     res.status(404);
     throw new Error('Order not found');
   }
 
-  if (order.buyer.toString() !== user._id.toString()) {
+  if (order.buyer._id.toString() !== user._id.toString()) {
     res.status(403);
     throw new Error('Unauthorized: Order does not belong to this user');
   }
@@ -121,13 +131,18 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
   res.json(order);
 });
 
-
 export const getOrderDetailsById = asyncHandler(async (req: Request, res: Response) => {
   const { orderId } = req.params;
 
   const order = await Order.findById(orderId)
-    .populate('event', 'title')
-    .populate('buyer', 'firstName lastName');
+    .populate({
+      path: 'event',
+      select: 'title imageUrl location startDateTime endDateTime',
+    })
+    .populate({
+      path: 'buyer',
+      select: 'firstName lastName',
+    });
 
   if (!order) {
     res.status(404);
