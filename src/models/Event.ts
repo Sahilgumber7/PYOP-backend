@@ -1,71 +1,62 @@
-import { Document, Schema, model, models, Types } from "mongoose";
-
-interface TicketCategory {
-  name: string;
-  price: string;
-  totalTickets: string;
-  remainingTickets: string;
-}
+import { Document, Schema, model, models } from "mongoose";
 
 export interface IEvent extends Document {
   title: string;
   description?: string;
   location?: string;
-  createdAt: Date;
+  createdAt: number;
   imageUrl: string;
-  startDateTime: number; // ✅ timestamp (in ms)
-  endDateTime: number;   // ✅ timestamp (in ms)
+  startDateTime: number;
+  endDateTime: number;
   isFree: boolean;
   url?: string;
-  category: Types.ObjectId;  // ref to Category
-  organizer: Types.ObjectId; // ref to User
+  category: string;
+  organizer: string;
   eventType: "private" | "public";
-  ticketCategories: TicketCategory[];
+  ticketCategories: {
+    _id: Schema.Types.ObjectId;
+    name: string;
+    price: number;
+    totalTickets: number;
+    remainingTickets: number;
+  }[];
   approvalStatus: "pending" | "approved" | "rejected";
+  promoCodes?: { code: string; discount: number }[];
 }
 
-const EventSchema = new Schema<IEvent>(
-  {
-    title: { type: String, required: true },
-    description: { type: String },
-    location: { type: String },
-    createdAt: { type: Date, default: () => new Date() },
-    imageUrl: { type: String, required: true },
-
-    // ✅ Store as timestamp (number)
-    startDateTime: { type: Number, required: true },
-    endDateTime: { type: Number, required: true },
-
-    isFree: { type: Boolean, default: false },
-    url: { type: String },
-    category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-    organizer: { type: Schema.Types.ObjectId, ref: "User", required: true },
-
-    eventType: {
-      type: String,
-      enum: ["private", "public"],
-      required: true,
+const EventSchema = new Schema<IEvent>({
+  title: { type: String, required: true },
+  description: String,
+  location: String,
+  createdAt: { type: Number, default: () => Date.now() },
+  imageUrl: { type: String, required: true },
+  startDateTime: { type: Number, required: true },
+  endDateTime: { type: Number, required: true },
+  isFree: { type: Boolean, default: false },
+  url: String,
+  category: { type: String },
+  organizer: { type: String },
+  eventType: { type: String, enum: ["private", "public"], required: true },
+  ticketCategories: [
+    {
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      totalTickets: { type: Number, required: true },
+      remainingTickets: { type: Number, required: true },
     },
-
-    ticketCategories: [
-      {
-        name: { type: String, required: true },
-        price: { type: String, required: true },
-        totalTickets: { type: String, required: true },
-        remainingTickets: { type: String, required: true },
-      },
-    ],
-
-    approvalStatus: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
+  ],
+  approvalStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
   },
-  {
-    timestamps: true,
-  }
-);
+  promoCodes: [
+    {
+      code: { type: String, required: true },
+      discount: { type: Number, required: true }, // percentage discount
+    },
+  ],
+});
 
 const Event = models.Event || model<IEvent>("Event", EventSchema);
 export default Event;

@@ -1,15 +1,20 @@
-import { Schema, model, models, Document, Types } from 'mongoose';
+import { Schema, model, models, Document, Types } from "mongoose";
 
 export interface IOrder extends Document {
   createdAt: Date;
   razorpayId: string;
-  totalAmount: string;
+  totalAmount: number; // before discount
+  finalAmount: number; // after discount
+  discountAmount: number;
+  promoCode?: string;
   event: Types.ObjectId;
   buyer: Types.ObjectId;
-  ticketCategory: {
+  tickets: {
+    categoryId: Types.ObjectId;
     name: string;
-    _id: Types.ObjectId;
-  };
+    quantity: number;
+    price: number; // per ticket price
+  }[];
   CheckIn: boolean;
 }
 
@@ -22,30 +27,34 @@ const OrderSchema = new Schema<IOrder>({
     type: String,
     required: true,
   },
-  totalAmount: {
-    type: String,
-    required: true,
-  },
+  totalAmount: { type: Number, required: true },
+  finalAmount: { type: Number, required: true },
+  discountAmount: { type: Number, default: 0 },
+  promoCode: { type: String, default: null },
   event: {
     type: Schema.Types.ObjectId,
-    ref: 'Event',
+    ref: "Event",
     required: true,
   },
   buyer: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
-  ticketCategory: {
-    name: { type: String, required: true },
-    _id: { type: Schema.Types.ObjectId, required: true },
-  },
+  tickets: [
+    {
+      categoryId: { type: Schema.Types.ObjectId, required: true },
+      name: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
+    },
+  ],
   CheckIn: {
     type: Boolean,
     default: false,
   },
 });
 
-const Order = models.Order || model<IOrder>('Order', OrderSchema);
+const Order = models.Order || model<IOrder>("Order", OrderSchema);
 
 export default Order;
