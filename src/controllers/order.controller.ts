@@ -135,11 +135,10 @@ export const validatePromo = asyncHandler(async (req: Request, res: Response): P
    Create order (multi-ticket, optional promo).
 -------------------------------------------------- */
 export const createOrder = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { clerkId, eventId, tickets, promoCode, razorpayId } = req.body as {
+  const { clerkId, eventId, tickets, razorpayId } = req.body as {
     clerkId: string;
     eventId: string;
     tickets: IncomingTicket[];
-    promoCode?: string;
     razorpayId: string;
   };
 
@@ -157,20 +156,19 @@ export const createOrder = asyncHandler(async (req: Request, res: Response): Pro
 
   let lineItems;
   try {
+    if (!Array.isArray(tickets) || tickets.length !== 1) {
+      throw new Error("Only one ticket category is allowed per order.");
+    }
+
     lineItems = buildLineItems(event, tickets);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
     return;
   }
 
-  const promo = promoCode
-    ? event.promoCodes?.find((p: any) => p.code === promoCode)
-    : null;
-
-  const { totalAmount, discountAmount, finalAmount } = computeTotals(
-    lineItems,
-    promo?.discount
-  );
+  const { totalAmount } = computeTotals(lineItems);
+  const finalAmount = totalAmount; // No promo, so final = total
+  const discountAmount = 0;
 
   const newOrder = await Order.create({
     razorpayId: razorpayId || uuidv4(),
@@ -182,7 +180,6 @@ export const createOrder = asyncHandler(async (req: Request, res: Response): Pro
       price: t.price,
       quantity: t.quantity,
     })),
-    promoCode: promoCode || null,
     discountAmount,
     totalAmount,
     finalAmount,
@@ -206,6 +203,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response): Pro
     amountToPay: finalAmount,
   });
 });
+
 
 /* -------------------------------------------------
    GET /api/orders/user/:clerkId

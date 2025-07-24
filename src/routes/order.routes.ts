@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   createOrder,
-  validatePromo,
+
   getOrdersByUser,
   getOrderById,
   getOrderDetailsById,
@@ -9,7 +9,6 @@ import {
 
 const router = express.Router();
 
-router.post('/validate-promo', validatePromo);
 router.post('/', createOrder);
 router.get('/user/:clerkId', getOrdersByUser);
 router.get('/:orderId/user/:clerkId', getOrderById);
